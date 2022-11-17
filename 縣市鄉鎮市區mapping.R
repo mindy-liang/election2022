@@ -21,9 +21,16 @@ election_county_mapping <- do.call(rbind,county.list) %>%
          deptCode = 3,
          name = 4)
 
+election_city_mapping <- election_county_mapping %>%
+  filter(!prvCode %in% c("00","09","10")) %>%
+  filter()
+
 election_village_mapping <- do.call(rbind,village.list) %>%
   rename(prvCode  = 1,
          cityCode = 2,
          deptCode = 3,
          liCode = 4,
          VILLNAME = 5)
+
+election_mapping <- election_village_mapping %>%
+  left_join()
