@@ -38,6 +38,7 @@ election_village_mapping <- do.call(rbind,village.list) %>%
 
 #define資料樣式 輸出為mapping用檔案
 
+#縣市、鄉鎮市區層級
 election_city_mapping <- election_county_mapping %>%
   mutate(COUNTYNAME = ifelse(deptCode=="000",name, NA),
          TOWNNAME = ifelse(deptCode=="000",NA, name)) %>%
@@ -52,8 +53,37 @@ election_city_mapping <- election_county_mapping %>%
 
 write_csv(election_city_mapping, file.path(mapping.path,"election_city_mapping.csv"))
 
+#縣市、鄉鎮市區、村里層級
 election_all_mapping <- election_city_mapping %>%
   left_join(election_village_mapping) %>%
   select(1:3,6,4,5,7)
 
 write_csv(election_all_mapping, file.path(mapping.path,"election_village_mapping.csv"))
+
+#### 政黨資訊 ####
+
+#輸入2022年政黨excel表
+
+party <- "~/Library/Mobile Documents/com~apple~CloudDocs/Documents/九合一選舉-中選會/mapping/111年政黨代碼表.xlsx"
+
+party.name <- read_excel(party, col_types = "text")
+
+write_csv(party.name, file.path(mapping.path,"party_mapping.csv"))
+
+
+#### 各公職候選人名單 ####
+
+#讀取檔案夾內所有excel檔
+
+file.list <- list.files(path = "~/Library/Mobile Documents/com~apple~CloudDocs/Documents/九合一選舉-中選會/mapping/各公職候選人", 
+                        pattern='*.xls')
+
+candidate.list <- lapply(file.list, function(x) {
+  read_excel(path = paste("~/Library/Mobile Documents/com~apple~CloudDocs/Documents/九合一選舉-中選會/mapping/各公職候選人",x,sep = "/"),
+             skip = 4)
+})
+
+
+county.list <- lapply(sheetNames, function(x){
+  read_excel(county, sheet = x, skip = 1, col_types = "text")
+})
