@@ -14,14 +14,22 @@ download.file("https://download.2022dl.nat.gov.tw/running.json",destfile="runnin
 download.file("https://download.2022dl.nat.gov.tw/final.json",destfile="final_T_17NOV.json", method = "wget", extra="--no-check-certificate	--http-user=DL000005 --http-password=7JM3MAI")
 
 running_T <- fromJSON("running_T_17NOV.json")
+final <- fromJSON("final_T_17NOV.json")
 
-finalRaw <- running_T
+finalRaw <- final
+
+runningRaw <- running_T
 
 citycons <- rbind(finalRaw$T1,finalRaw$T2,finalRaw$T3)
 
 citymayor <- finalRaw$TC
 
 village <- finalRaw$TV
+
+
+citycons_r <- rbind(runningRaw$T1,runningRaw$T2,runningRaw$T3)
+
+citymayor_r <- runningRaw$TC
 
 #### data cleaning ####
 
