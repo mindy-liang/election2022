@@ -8,13 +8,12 @@ path <-"~/Library/Mobile Documents/com~apple~CloudDocs/Documents/九合一選舉
 
 #### import ####
 
-library(wget)
+# 17 Nov 測試
+download.file("https://download.2022dl.nat.gov.tw/running.json",destfile="running_T_17NOV.json", method = "wget", extra="--no-check-certificate	--http-user=DL000005 --http-password=7JM3MAI")
 
-download.file("https://download.2022dl.nat.gov.tw/running.json",destfile="running_T.json", method = "wget", extra="--no-check-certificate	--http-user=DL000005 --http-password=7JM3MAI")
+download.file("https://download.2022dl.nat.gov.tw/final.json",destfile="final_T_17NOV.json", method = "wget", extra="--no-check-certificate	--http-user=DL000005 --http-password=7JM3MAI")
 
-download.file("https://download.2022dl.nat.gov.tw/final.json",destfile="final_T.json", method = "wget", extra="--no-check-certificate	--http-user=DL000005 --http-password=7JM3MAI")
-
-running_T <- fromJSON("running_T.json")
+running_T <- fromJSON("running_T_17NOV.json")
 
 finalRaw <- running_T
 
