@@ -83,7 +83,14 @@ candidate.list <- lapply(file.list, function(x) {
              skip = 4)
 })
 
+file.name <- sub(".xls","",file.list)
 
-county.list <- lapply(sheetNames, function(x){
-  read_excel(county, sheet = x, skip = 1, col_types = "text")
-})
+candidate.list <- mapply(cbind, candidate.list, "公職類別"=file.name, SIMPLIFY=F)
+
+#去除出生地column以取得資料一致
+candidate.list <- lapply(candidate.list, function(x) x[!(names(x) %in% c("出生地"))])
+
+#合併所有公職候選人資料
+candidate <- do.call(rbind, candidate.list)
+
+write_csv(candidate, file.path(mapping.path,"2022九合一選舉各公職候選人清單.csv"))
