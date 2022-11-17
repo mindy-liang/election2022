@@ -1,3 +1,5 @@
+mapping.path <- "~/Library/Mobile Documents/com~apple~CloudDocs/Documents/九合一選舉-中選會/election2022/mapping data"
+
 #### import ####
 
 county <- "~/Library/Mobile Documents/com~apple~CloudDocs/Documents/九合一選舉-中選會/mapping/111年憲法修正案公民複決縣市及鄉鎮市區代碼表.xlsx"
@@ -22,8 +24,17 @@ election_county_mapping <- do.call(rbind,county.list) %>%
          name = 4)
 
 election_city_mapping <- election_county_mapping %>%
-  filter(!prvCode %in% c("00","09","10")) %>%
-  filter()
+  mutate(COUNTYNAME = ifelse(deptCode=="000",name, ""),
+         TOWNNAME = ifelse(deptCode=="000","NA", name)) %>%
+  mutate(COUNTYNAME = ifelse(prvCode %in% c("63","64","65","66","67","68")|
+                             prvCode %in% c("09","10")&cityCode!="000",COUNTYNAME,"")) %>%
+  arrange(prvCode,cityCode) 
+
+test <- election_city_mapping %>%
+  filter(cityCode!="000") %>%
+  fill(COUNTYNAME, .direction = "down")
+
+write_csv(election_city_mapping, file.path(mapping.path,"election_city_mapping.csv"))
 
 election_village_mapping <- do.call(rbind,village.list) %>%
   rename(prvCode  = 1,
@@ -32,5 +43,5 @@ election_village_mapping <- do.call(rbind,village.list) %>%
          liCode = 4,
          VILLNAME = 5)
 
-election_mapping <- election_village_mapping %>%
-  left_join()
+test <- election_city_mapping %>%
+  left_join(election_village_mapping)
