@@ -108,20 +108,36 @@ citycons.list <- rbind(candidate.list[[4]],candidate.list[[6]]) %>%
 
 #將上述公職候選人資料加入縣市村里編碼
 
+#縣市長
 citymayor.list %>%
   left_join(filter(election_county_mapping,deptCode=="000"),by = c("選舉區" = "name")) %>%
   select(7:10,1,6,2:5) -> citymayor.list
 
-#citycons.list 需切割選區
+write_csv(citymayor.list, file.path(mapping.path,"candidate_citymayor_mapping.csv"))
 
+#縣市議員
 
-splitInParts <- function(string, size){
-  pat <- paste0('(?<=.{',size,'})')
-  strsplit(string, pat, perl=TRUE)
-}
+citycons.list %>%
+  separate(col = 選舉區, into = c("縣市","選區"),sep = 3) %>%
+  mutate(areaCode = stringr::str_extract(選區, "\\d+")) %>%
+  left_join(filter(election_county_mapping,deptCode=="000"),by = c("縣市" = "name")) %>%
+  select(8,10:12,9,1,2,7,3:6) -> citycons.list
 
-test <- splitInParts(village.list$選舉區,3)
+citycons.list$areaCode <- as.character(sprintf("%02d",as.numeric(citycons.list$areaCode)))
   
+write_csv(citycons.list, file.path(mapping.path,"candidate_citycons_mapping.csv"))
 
+#村里長
+
+map_village <- election_all_mapping %>%
+  filter(!is.na(liCode)) %>%
+  unite("合併NAME",5:7,sep = "") 
+
+village.list %>%
+  left_join(filter(map_village,!is.na(liCode)),by = c("選舉區" = "合併NAME")) %>%
+  separate(col = 選舉區, into = c("縣市","鄉鎮市區","村里"),sep = c(3,6)) %>%
+  select(9:13,1:3,8,4:7) ->village.list
+  
+write_csv(village.list, file.path(mapping.path,"candidate_village_mapping.csv"))
 
 
