@@ -44,6 +44,8 @@ write_csv(village, file.path(Vote.path, "village.csv"))
 
 #### data cleaning ####
 
+analysis.path <- "~/Library/Mobile Documents/com~apple~CloudDocs/Documents/九合一選舉-中選會/election2022/選後分析圖表用data"
+
 citymayor.nameData <- citymayor %>%
   filter(is.na(deptCode)) %>%
   left_join(citymayor.list,
@@ -79,6 +81,8 @@ citymayor.nameData  %>%
   group_by(選舉區,政黨分類) %>%
   summarise(得票率 = sprintf("%5.2f",sum(tksRate))) -> citymayor.voteRate.party 
 
+write_csv(citymayor.voteRate.party,file.path(analysis.path,"各縣市各政黨得票率.csv"))
+
 
 # 各縣市長藍綠催票率
 # 若同黨參選如何計算？
@@ -88,7 +92,7 @@ citymayor.nameData %>%
   group_by(選舉區,政黨分類) %>%
   summarise(催票率 = sprintf("%5.2f",(tks/選舉人數*100))) -> citymayor.goVoteRate.party 
 
-
+write_csv(citymayor.goVoteRate.party,file.path(analysis.path,"各縣市藍綠縣市長催票率.csv"))
 
 #縣市長&縣市議員分裂情形
 
