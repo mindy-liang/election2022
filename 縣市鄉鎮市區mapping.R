@@ -94,3 +94,34 @@ candidate.list <- lapply(candidate.list, function(x) x[!(names(x) %in% c("出生
 candidate <- do.call(rbind, candidate.list)
 
 write_csv(candidate, file.path(mapping.path,"2022九合一選舉各公職候選人清單.csv"))
+
+#依公職分類(只看縣市長、縣市議員、村里長)
+village.list <- candidate.list[[1]] %>%
+  mutate(參選年齡 = 111- as.numeric(substr(出生年月日, 1, 3))) %>%
+  select(1:3,8,5:7)
+citymayor.list <- rbind(candidate.list[[5]],candidate.list[[7]]) %>%
+  mutate(參選年齡 = 111- as.numeric(substr(出生年月日, 1, 3))) %>%
+  select(1:3,8,5:7)
+citycons.list <- rbind(candidate.list[[4]],candidate.list[[6]]) %>%
+  mutate(參選年齡 = 111- as.numeric(substr(出生年月日, 1, 3))) %>%
+  select(1:3,8,5:7)
+
+#將上述公職候選人資料加入縣市村里編碼
+
+citymayor.list %>%
+  left_join(filter(election_county_mapping,deptCode=="000"),by = c("選舉區" = "name")) %>%
+  select(7:10,1,6,2:5) -> citymayor.list
+
+#citycons.list 需切割選區
+
+
+splitInParts <- function(string, size){
+  pat <- paste0('(?<=.{',size,'})')
+  strsplit(string, pat, perl=TRUE)
+}
+
+test <- splitInParts(village.list$選舉區,3)
+  
+
+
+
