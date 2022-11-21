@@ -98,9 +98,26 @@ write_csv(citymayor.goVoteRate.party,file.path(analysis.path,"各縣市藍綠縣
 
 citymayor.nameData  %>%
   filter(candVictor %in% c("*","!")) %>%
-  select(13,1:2,"選舉區","政黨分類")
+  select(13,1:2,"選舉區","政黨分類") %>%
+  mutate(年份 = "2022") %>%
+  select(6,4,5) %>%
+  rename("縣市" = 2, "縣市長政黨" = 3) ->leadingParty_citymayors_2022
 
+citycons.nameData %>%
+  filter(candVictor %in% c("*","!")) %>%
+  select(15,17,21) %>%
+  group_by(縣市,政黨分類) %>%
+  summarise(席次 = n()) %>%
+  filter(!政黨分類 %in% c("無黨籍","其他政黨")) %>%
+  arrange(縣市,desc(席次)) %>%
+  slice_head(n = 1) %>%
+  mutate(年份 = "2022")%>%
+  select(4,1,2) %>%
+  rename("議會最大黨" = 3) ->leadingParty_citycons_2022
 
+leadingParty_diff_byCounty_2022 <- left_join(leadingParty_citymayors_2022,leadingParty_citycons_2022) %>%
+  mutate(是否分裂 =  ifelse(縣市長政黨 == 議會最大黨, "N", "Y"))
+  
   
   
 
