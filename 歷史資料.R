@@ -19,6 +19,10 @@ leadingParty_diff_byCounty <- left_join(leadingParty_citymayors,leadingParty_cit
 
 write_csv(leadingParty_diff_byCounty,file.path(analysis.path,"各縣市首長與議會最大黨分裂情形.csv"))
 
+write_sheet(leadingParty_diff_byCounty,
+            ss = "1JDiHbk4jORtrUoWBHdIELakqQMMVygs-I8xKvTo7v9M",
+            sheet = "各縣市首長與議會最大黨分裂情形")
+
 #### 2012起歷屆選舉藍綠催票率 ####
 
 ## 整理總統大選資料 ###
@@ -254,3 +258,7 @@ goVoteRate_byParty <- rbind(goVoteRate_president,goVoteRate_citymayors) %>%
   arrange(年份,政黨名稱)
 
 write_csv(goVoteRate_byParty,file.path(analysis.path,"2012至今藍綠選舉投票率與催票率變化.csv"))
+
+write_sheet(goVoteRate_byParty,
+            ss = "1JDiHbk4jORtrUoWBHdIELakqQMMVygs-I8xKvTo7v9M",
+            sheet = "2012至今藍綠選舉投票率與催票率變化")
