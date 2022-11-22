@@ -140,4 +140,19 @@ village.list %>%
   
 write_csv(village.list, file.path(mapping.path,"candidate_village_mapping.csv"))
 
+#### 選區 mapping ####
 
+area_raw <- read_xlsx("~/Library/Mobile Documents/com~apple~CloudDocs/Documents/九合一選舉-中選會/mapping/選區劃分-中選務字第1113150255號公告.xlsx")
+
+area_raw$行政區 <- sub("及","、",area_raw$行政區)
+
+area_mapping <- area_raw %>%
+  separate_rows(行政區, sep = "、")%>%
+  mutate(行政區 = str_trim(行政區), 選區 = )
+
+## 區隔成13縣 跟 6都3市
+
+cities <- c("臺北市","新北市","桃園市","臺中市","臺南市","高雄市","基隆市","新竹市","嘉義市")
+
+view(area_mapping %>%
+       filter(縣市 %in% cities))
