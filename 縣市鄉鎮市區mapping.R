@@ -148,11 +148,21 @@ area_raw$行政區 <- sub("及","、",area_raw$行政區)
 
 area_mapping <- area_raw %>%
   separate_rows(行政區, sep = "、")%>%
-  mutate(行政區 = str_trim(行政區), 選區 = )
+  mutate(行政區 = str_trim(行政區), 選區 = as.character(parse_number(選區)))
 
-## 區隔成13縣 跟 6都3市
+write_csv(area_mapping, file.path(mapping.path, "中選會公告2022年選區劃分.csv"))
 
-cities <- c("臺北市","新北市","桃園市","臺中市","臺南市","高雄市","基隆市","新竹市","嘉義市")
+## 以本屆中選會資料反推選舉區範圍 ##
 
-view(area_mapping %>%
-       filter(縣市 %in% cities))
+area_2022 <- citycons %>%
+  select(1:4) %>%
+  filter(!is.na(deptCode)) %>%
+  unique()
+
+election_all_mapping %>%
+  left_join(area_2022) %>%
+  select(1,2,8,3:7) -> election_area_mapping
+
+write_csv(election_area_mapping, file.path(mapping.path, "election_city_mapping.csv"))
+
+
