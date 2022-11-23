@@ -63,7 +63,7 @@ citymayor.nameData <- citymayor %>%
 
 citycons.nameData <- citycons %>%
   filter(is.na(deptCode)) %>%
-  inner_join(citycons.list,
+  left_join(citycons.list,
             by = c("prvCode", "cityCode","areaCode",
                    "candNo" = "抽籤號次")) %>%
   mutate(政黨分類 = case_when(
@@ -117,7 +117,26 @@ citycons.nameData %>%
 
 leadingParty_diff_byCounty_2022 <- left_join(leadingParty_citymayors_2022,leadingParty_citycons_2022) %>%
   mutate(是否分裂 =  ifelse(縣市長政黨 == 議會最大黨, "N", "Y"))
-  
+
+#### 本屆各縣市議會組成比例 ####
+
+citycons.nameData %>%
+  filter(!is.na(政黨分類)) %>%
+  group_by(縣市,政黨分類) %>%
+  summarise(當選人數 = length(candVictor[ which(candVictor=="*", candVictor=="!")]),
+            參選人數 = n(),
+            當選比例 = round(當選人數/參選人數*100,2)) %>%
+  mutate(席次佔比 = round(當選人數/sum(當選人數)*100,2), 年份 = "2022") %>%
+  select(7,1,2,6) %>%
+  spread(政黨分類,席次佔比) -> win.citycons.party.counties
+
+write_csv(win.citycons.party.counties,file.path(analysis.path,"2022年各縣市議會組成比例.csv"))
+
+write_sheet(win.citycons.party.counties,
+            ss = "1JDiHbk4jORtrUoWBHdIELakqQMMVygs-I8xKvTo7v9M",
+            sheet = "022年各縣市議會組成比例")
+
+
   
   
 
