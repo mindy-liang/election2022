@@ -262,3 +262,85 @@ write_csv(goVoteRate_byParty,file.path(analysis.path,"2012至今藍綠選舉投�
 write_sheet(goVoteRate_byParty,
             ss = "1JDiHbk4jORtrUoWBHdIELakqQMMVygs-I8xKvTo7v9M",
             sheet = "2012至今藍綠選舉投票率與催票率變化")
+
+#### 比較過去兩屆議員總席次變化 ####
+
+#歷屆縣市議員參選資料
+
+history.citycons.list <- read_sheet(ss = "1oWgoobgYUT8josvZuCShhe7kdw-gdowF3RIXRLiCEI8",
+                                    sheet = "2002-2018 縣市議員參選名單") %>%
+  mutate(政黨分類 = case_when(
+    政黨名稱== "中國國民黨" ~ "中國國民黨",
+    政黨名稱== "民主進步黨" ~ "民主進步黨",
+    政黨名稱== "台灣民眾黨" ~ "台灣民眾黨",
+    政黨名稱== "時代力量" ~ "時代力量",
+    政黨名稱== "無黨籍及未經政黨推薦" ~ "無黨籍",
+    政黨名稱!= c("中國國民黨","民主進步黨",
+              "台灣民眾黨","時代力量","無黨籍及未經政黨推薦") ~ "其他政黨")) %>%
+  unique()
+
+citycons.2014 <- filter(history.citycons.list, grepl("2014",年份))
+citycons.2018 <- filter(history.citycons.list, grepl("2018",年份))
+
+#計算各政黨議員席次佔比
+
+win.citycons.2014 <- citycons.2014 %>%
+  group_by(政黨分類) %>%
+  summarise(當選人數 = length(當選註記[ which(當選註記=="*", 當選註記=="!")]),
+            參選人數 = n(),
+            當選比例 = round(當選人數/參選人數*100,2)) %>%
+  mutate(席次佔比 = round(當選人數/sum(當選人數)*100,2), 年份 = "2014")
+
+
+win.citycons.2018 <- citycons.2018 %>%
+  group_by(政黨分類) %>%
+  summarise(當選人數 = length(當選註記[ which(當選註記=="*", 當選註記=="!")]),
+            參選人數 = n(),
+            當選比例 = round(當選人數/參選人數*100,2)) %>%
+  mutate(席次佔比 = round(當選人數/sum(當選人數)*100,2), 年份 = "2018")
+
+win.citycons <- rbind(win.citycons.2014,win.citycons.2018) %>%
+  select(1,5,6) %>%
+  spread(年份,席次佔比)
+
+write_sheet(win.citycons,
+            ss = "1JDiHbk4jORtrUoWBHdIELakqQMMVygs-I8xKvTo7v9M",
+            sheet = "全台議員總席次佔比變化")
+
+
+write_csv(win.citycons,file.path(analysis.path,"2014-2022全台議員總席次佔比變化.csv"))
+
+#### 比較過去兩屆議員各政黨得票率變化 ####
+
+voteRate.citycons <- history.citycons.list %>% filter(grepl("2014|2018",年份))
+  
+
+voteRate.citycons[11:14] <- sapply(voteRate.citycons[11:14],as.numeric)
+
+#計算各縣市各選區總投票數跟總選舉數
+
+voteRate.citycons %>%
+  select(1,4,13,14) %>%
+  unique() %>%
+  group_by(年份) %>%
+  summarise(總投票數 = sum(投票數),
+            總選舉人數 = sum(選舉人數)) -> vote.detail
+
+voteRate.citycons %>% 
+  group_by(年份,政黨分類) %>%
+  summarise(總得票數 = sum(得票數)) %>%
+  left_join(vote.detail) %>%
+  group_by(年份,政黨分類) %>%
+  summarise(政黨得票率 = round(總得票數/總投票數*100,2),
+            政黨催票率 = round(總得票數/總選舉人數*100,2)) -> voteRate.citycons.party
+
+write_csv(voteRate.citycons.party,file.path(analysis.path,"2014-2022議員各政黨得票率、催票率變化.csv"))
+
+write_sheet(voteRate.citycons.party,
+            ss = "1JDiHbk4jORtrUoWBHdIELakqQMMVygs-I8xKvTo7v9M",
+            sheet = "2014-2022議員各政黨得票率、催票率變化")
+
+#### 2020政黨票 與 2022 議員選舉 得票率/催票率 比較 ####
+
+
+
