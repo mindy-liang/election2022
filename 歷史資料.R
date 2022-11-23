@@ -342,5 +342,12 @@ write_sheet(voteRate.citycons.party,
 
 #### 2020政黨票 與 2022 議員選舉 得票率/催票率 比較 ####
 
+## 2020政黨票 資料清理
 
-
+elbase <- read_csv("~/Library/Mobile Documents/com~apple~CloudDocs/Documents/2022 九合一大選/voteData/voteData/2020總統立委/不分區政黨/elbase.csv", col_names = FALSE) #總表
+elcand <- read_csv("~/Library/Mobile Documents/com~apple~CloudDocs/Documents/2022 九合一大選/voteData/voteData/2020總統立委/不分區政黨/elcand.csv", col_names = FALSE) #候選人基本資訊
+elctks <- read_csv("~/Library/Mobile Documents/com~apple~CloudDocs/Documents/2022 九合一大選/voteData/voteData/2020總統立委/不分區政黨/elctks.csv", col_names = FALSE) #得票狀況
+elpaty <- read_csv("~/Library/Mobile Documents/com~apple~CloudDocs/Documents/2022 九合一大選/voteData/voteData/2020總統立委/不分區政黨/elpaty.csv", col_names = FALSE) #參選政黨
+elprof <- read_csv("~/Library/Mobile Documents/com~apple~CloudDocs/Documents/2022 九合一大選/voteData/voteData/2020總統立委/不分區政黨/elprof.csv", col_names = FALSE) #各縣市鄉鎮得票統計表
+elrepm <- read_csv("~/Library/Mobile Documents/com~apple~CloudDocs/Documents/2022 九合一大選/voteData/voteData/2020總統立委/不分區政黨/elrepm.csv", col_names = FALSE) #不分區政黨代表人
+elretks <- read_csv("~/Library/Mobile Documents/com~apple~CloudDocs/Documents/2022 九合一大選/voteData/voteData/2020總統立委/不分區政黨/elretks.csv", col_names = FALSE) #不分區政黨得票檔
