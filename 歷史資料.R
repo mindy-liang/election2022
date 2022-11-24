@@ -299,9 +299,17 @@ win.citycons.2018 <- citycons.2018 %>%
             當選比例 = round(當選人數/參選人數*100,2)) %>%
   mutate(席次佔比 = round(當選人數/sum(當選人數)*100,2), 年份 = "2018")
 
-win.citycons <- rbind(win.citycons.2014,win.citycons.2018) %>%
-  select(1,5,6) %>%
-  spread(年份,席次佔比)
+win.citycons.2022 <- citycons.nameData %>%
+  filter(!is.na(公職類別))%>%
+  group_by(政黨分類) %>%
+  summarise(當選人數 = length(candVictor[ which(candVictor=="*", candVictor=="!")]),
+            參選人數 = n(),
+            當選比例 = round(當選人數/參選人數*100,2)) %>%
+  mutate(席次佔比 = round(當選人數/sum(當選人數)*100,2), 年份 = "2022")
+
+win.citycons <- rbind(win.citycons.2014,win.citycons.2018,win.citycons.2022) %>%
+  select(1,6,5) %>%
+  spread(政黨分類,席次佔比)
 
 write_sheet(win.citycons,
             ss = "1JDiHbk4jORtrUoWBHdIELakqQMMVygs-I8xKvTo7v9M",
