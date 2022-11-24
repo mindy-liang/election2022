@@ -351,3 +351,128 @@ elpaty <- read_csv("~/Library/Mobile Documents/com~apple~CloudDocs/Documents/202
 elprof <- read_csv("~/Library/Mobile Documents/com~apple~CloudDocs/Documents/2022 九合一大選/voteData/voteData/2020總統立委/不分區政黨/elprof.csv", col_names = FALSE) #各縣市鄉鎮得票統計表
 elrepm <- read_csv("~/Library/Mobile Documents/com~apple~CloudDocs/Documents/2022 九合一大選/voteData/voteData/2020總統立委/不分區政黨/elrepm.csv", col_names = FALSE) #不分區政黨代表人
 elretks <- read_csv("~/Library/Mobile Documents/com~apple~CloudDocs/Documents/2022 九合一大選/voteData/voteData/2020總統立委/不分區政黨/elretks.csv", col_names = FALSE) #不分區政黨得票檔
+
+colnames(elbase) <- c("省市","縣市","選區","鄉鎮市區","村里","名稱")
+colnames(elcand) <- c("省市","縣市","選區","鄉鎮市區","村里","號次","名字","政黨代號","性別","出生日期","年齡","出生地","學歷","現任","當選註記")
+colnames(elctks) <- c("省市","縣市","選區","鄉鎮市區","村里","投開票所","號次","得票數","得票率","當選註記")
+colnames(elpaty) <- c("政黨代號","政黨名稱")
+colnames(elprof) <- c("省市","縣市","選區","鄉鎮市區","村里","投開票所","有效票","無效票","投票數","選舉人數","人口數","候選人數合計","當選人數合計",
+                      "候選人數男","候選人數女","當選人數男","當選人數女","選舉人數對人口數","投票數對選舉人數","當選人數對候選人數")
+colnames(elrepm) <- c("政黨代號","排名","名字","性別","出生日期","年齡","出生地","學歷","現任","當選註記")
+colnames(elretks) <- c("政黨代號","第一階段得票率","第二階段得票率","候選人數","當選人數")
+
+#去除elcand NA列
+
+elcand[,16] <- NULL
+elcand$政黨代號 <- as.character(elcand$政黨代號)
+elpaty$政黨代號 <- as.character(elpaty$政黨代號)  
+
+# 清理與合併
+
+
+party.tks.2020 <- elctks %>%
+  filter(村里 == "0000"&投開票所 =="0000") %>%
+  left_join(select(elcand, c(6,7))) %>%
+  left_join(
+    select(
+      filter(elbase, 鄉鎮市區=="000"&選區=="00"),
+      c(1,2,6))) %>%
+  left_join(
+    select(
+      filter(elbase, 鄉鎮市區!="000"&村里=="0000"),
+      -c(3,5)), by = c("省市","縣市","鄉鎮市區")) %>%
+  left_join(
+    select(filter(elprof, 村里 == "0000"&投開票所 =="0000"),c(1:4,9,10))) %>%
+  mutate(年份 = "2020", 類別 = "政黨票") %>%
+  ungroup() %>%
+  select(16,17,12,13,3,7,11,8,9,14,15) %>%
+  rename("縣市" = 3, "鄉鎮市區" = 4 ) %>%
+  mutate(政黨分類 = case_when(
+    名字== "中國國民黨" ~ "中國國民黨",
+    名字== "民主進步黨" ~ "民主進步黨",
+    名字== "台灣民眾黨" ~ "台灣民眾黨",
+    名字== "時代力量" ~ "時代力量",
+    名字== "無" ~ "無黨籍",
+    名字!= c("中國國民黨","民主進步黨",
+             "台灣民眾黨","時代力量","無") ~ "其他政黨"))
+
+##2020 政黨票 & 2022 議員席次佔比
+
+# 2020 政黨票（全國）
+
+voteRate.party.tks.2020 <- elretks %>%
+  mutate(政黨代號 = as.character(政黨代號)) %>%
+  left_join(elpaty) %>%
+  mutate(政黨分類 = case_when(
+    政黨名稱== "中國國民黨" ~ "中國國民黨",
+    政黨名稱== "民主進步黨" ~ "民主進步黨",
+    政黨名稱== "台灣民眾黨" ~ "台灣民眾黨",
+    政黨名稱== "時代力量" ~ "時代力量",
+    政黨名稱== "無" ~ "無黨籍",
+    政黨名稱!= c("中國國民黨","民主進步黨",
+              "台灣民眾黨","時代力量","無") ~ "其他政黨")) %>%
+  select(6,7,2:5)
+
+thirdparty.tks.2020 <- voteRate.party.tks.2020 %>%
+  filter(政黨分類 %in% c("時代力量","台灣民眾黨","無黨籍")) %>%
+  select(2,3) %>%
+  rename("第一階段政黨票得票率" = 2) %>% 
+  mutate(分類 = "全國")
+
+# 2022 議員席次（全國）
+
+thirdparty.citycons.2022 <- citycons.nameData %>%
+  group_by(政黨分類) %>%
+  summarise(當選人數 = length(candVictor[ which(candVictor=="*", candVictor=="!")]),
+            參選人數 = n(),
+            當選比例 = round(當選人數/參選人數*100,2)) %>%
+  mutate(議員席次佔比 = round(當選人數/sum(當選人數)*100,2)) %>%
+  filter(政黨分類 %in% c("時代力量","台灣民眾黨")) %>%
+  select(1,5) %>%
+  mutate(分類 = "全國")
+
+
+#時力選區
+
+newparty.dept.2022 <- read_sheet(ss = "1JDiHbk4jORtrUoWBHdIELakqQMMVygs-I8xKvTo7v9M",
+                                 sheet = "時代力量議員提名選區") %>%
+  select(2,1) %>%
+  mutate(時力選區 = str_sub(時力選區, 4,9)) 
+
+
+# 2020 政黨票（時力選區）
+
+
+newparty.dept.2022 %>%
+  mutate(選區 = sprintf("%02d",parse_number(時力選區))) -> parse.newparty
+
+thirdparty.tks.2020.dept <- party.tks.2020 %>%
+  inner_join(select(parse.newparty, c(1,3)), by = c("縣市","選區")) %>%
+  group_by(政黨分類) %>%
+  summarise(政黨得票率 = sum(得票數)) %>%
+  filter(政黨分類 %in% c("時代力量","台灣民眾黨"))
+
+newparty.tks <- elprof %>%
+  filter(省市 == "00") %>%
+  
+
+
+# 2022 議員席次（時力選區）
+thirdparty.citycons.2022.dept <- citycons.nameData %>%
+  inner_join(newparty.dept.2022, by = c("縣市","選區" = "時力選區")) %>%
+  group_by(政黨分類) %>%
+  summarise(當選人數 = length(candVictor[ which(candVictor=="*", candVictor=="!")]),
+            參選人數 = n(),
+            當選比例 = round(當選人數/參選人數*100,2)) %>%
+  mutate(議員席次佔比 = round(當選人數/sum(當選人數)*100,2)) %>%
+  filter(政黨分類 %in% c("時代力量","台灣民眾黨")) %>%
+  select(1,5) %>%
+  mutate(分類 = "時力選區")
+
+#合併資料
+thirdparty.rate <- cbind(thirdparty.tks.2020,thirdparty.citycons.2022)
+  
+write_sheet(thirdparty.rate,
+            ss = "1JDiHbk4jORtrUoWBHdIELakqQMMVygs-I8xKvTo7v9M",
+            sheet = "全國-時力與民眾黨佔比")
+

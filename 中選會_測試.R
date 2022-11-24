@@ -20,24 +20,24 @@ finalRaw <- final
 
 citycons <- rbind(finalRaw$T1,finalRaw$T2,finalRaw$T3) %>%
   unnest(cols = c(candTksInfo)) %>%
-  select(1:10,17:18) %>%
-  rename("選舉人數" = 11, "投票率" = 12)%>%
+  select(1:10,13,17:18) %>%
+  rename("投票數" = 11,"選舉人數" = 12, "投票率" = 13)%>%
   mutate(candNo = as.character(candNo))
 
 write_csv(citycons, file.path(Vote.path, "citycons.csv"))
 
 citymayor <- (finalRaw$TC) %>%
   unnest(cols = c(candTksInfo)) %>%
-  select(1:10,17:18)%>%
-  rename("選舉人數" = 11, "投票率" = 12) %>%
+  select(1:10,13,17:18)%>%
+  rename("投票數" = 11,"選舉人數" = 12, "投票率" = 13) %>%
   mutate(candNo = as.character(candNo))
 
 write_csv(citymayor, file.path(Vote.path, "citymayor.csv"))
 
 village <- (finalRaw$TV) %>%
   unnest(cols = c(candTksInfo)) %>%
-  select(1:10,17:18)%>%
-  rename("選舉人數" = 11, "投票率" = 12)%>%
+  select(1:10,13,17:18)%>%
+  rename("投票數" = 11,"選舉人數" = 12, "投票率" = 13)%>%
   mutate(candNo = as.character(candNo))
 
 write_csv(village, file.path(Vote.path, "village.csv"))
@@ -63,7 +63,7 @@ citymayor.nameData <- citymayor %>%
 
 citycons.nameData <- citycons %>%
   filter(is.na(deptCode)) %>%
-  left_join(citycons.list,
+  left_join(select(citycons.list, -"deptCode"),
             by = c("prvCode", "cityCode","areaCode",
                    "candNo" = "抽籤號次")) %>%
   mutate(政黨分類 = case_when(
