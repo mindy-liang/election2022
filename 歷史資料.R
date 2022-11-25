@@ -457,7 +457,7 @@ newparty.dept.2022 %>%
 thirdparty.tks.2020.dept <- party.tks.2020 %>%
   inner_join(select(parse.newparty, c(1,3)), by = c("縣市","選區")) %>%
   group_by(政黨分類) %>%
-  summarise(政黨得票率 = sum(得票數)) %>%
+  summarise(政黨得票數 = sum(得票數)) %>%
   filter(政黨分類 %in% c("時代力量","台灣民眾黨"))
 
 newparty.tks <- elprof %>%
@@ -483,4 +483,6 @@ thirdparty.rate <- cbind(thirdparty.tks.2020,thirdparty.citycons.2022)
 write_sheet(thirdparty.rate,
             ss = "1JDiHbk4jORtrUoWBHdIELakqQMMVygs-I8xKvTo7v9M",
             sheet = "全國-時力與民眾黨佔比")
+
+
 

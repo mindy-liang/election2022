@@ -1,6 +1,6 @@
 #### setup ####
 
-pacman::p_load(tidyverse,xml2, stringr, googledrive, googlesheets4,httr,readxl,jsonlite)
+pacman::p_load(tidyverse,xml2, stringr, googledrive, googlesheets4,httr,readxl,jsonlite,curl)
 
 gs4_auth(email = "mindy.liang@thenewslens.com")
 
