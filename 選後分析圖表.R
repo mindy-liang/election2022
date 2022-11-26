@@ -7,7 +7,7 @@ taiwan.county.mapping <- read_sheet(ss = "1JDiHbk4jORtrUoWBHdIELakqQMMVygs-I8xKv
 #### 2. 2022年各縣市議會組成比例 ####
 
 citycons.all %>%
-  filter(!is.na(政黨分類)) %>%
+  filter(!is.na(政黨分類),is.na(deptCode)) %>%
   group_by(縣市,政黨分類) %>%
   summarise(當選人數 = length(candVictor[ which(candVictor=="*", candVictor=="!")]),
             參選人數 = n(),
@@ -16,7 +16,7 @@ citycons.all %>%
   select(7,1,2,6) %>%
   spread(政黨分類,席次佔比) %>%
   left_join(taiwan.county.mapping, by = c("縣市" ="mapping-縣市")) %>%
-  select(9,11,10,1:9) %>%
+  select(9,11,10,1,2,3,5,6,8,4,7) %>%
   arrange(編號)-> win.citycons.party.counties
 
 write_csv(win.citycons.party.counties,file.path(analysis.path,"2022年各縣市議會組成比例.csv"))
@@ -76,7 +76,7 @@ win.citycons <- rbind(win.citycons.2014,win.citycons.2018,win.citycons.2022) %>%
 
 write_sheet(win.citycons,
             ss = "1JDiHbk4jORtrUoWBHdIELakqQMMVygs-I8xKvTo7v9M",
-            sheet = "全台議員總席次佔比變化")
+            sheet = "3.全台議員總席次佔比變化")
 
 
 write_csv(win.citycons,file.path(analysis.path,"3.全台議員總席次佔比變化"))
@@ -96,19 +96,21 @@ goVoteRate_president[4:5] <- sapply(goVoteRate_president[4:5],as.numeric)
 
 #縣市長 round(政黨得票數/政黨投票數*100,2)
 
-goVoteRate_citymayors <- PartyVotes_citymayors%>%
-  filter(政黨名稱 %in% c("民主進步黨","中國國民黨")) %>%
+tks_citymayors <- PartyVotes_citymayors%>%
   group_by(年份,政黨名稱) %>%
-  mutate(政黨得票數 = sum(得票數),政黨投票數 = sum(投票數)) %>%
-  group_by(年份) %>%
-  mutate(當年選舉人數 = sum(選舉人數)) %>%
-  select(1,4,9:11) %>%
+  summarise(政黨得票數 = sum(得票數)) %>%
+  filter(政黨名稱 %in% c("民主進步黨","中國國民黨"))
+
+detail_citymayors <-  PartyVotes_citymayors %>%
+  select(1,2,8) %>%
   unique() %>%
-  group_by(年份,政黨名稱) %>%
-  summarise(政黨得票率 = round(政黨得票數/政黨投票數*100,2),
-            政黨催票率 = round(政黨得票數/當年選舉人數*100,2)) %>%
-  mutate(選舉分類 = "縣市長") %>%
-  select(1,5,2,3,4)
+  group_by(年份) %>%
+  summarise(總選舉人數 = sum(選舉人數))
+
+goVoteRate_citymayors <- tks_citymayors %>%
+  left_join(detail_citymayors) %>%
+  mutate(政黨催票率 = round(政黨得票數/detail_citymayors$總選舉人數*100,2))
+
 
 #2022資料
 
@@ -176,6 +178,7 @@ write_sheet(citymayor.voteRate.party,
 
 citycons.all %>%
   filter(is.na(deptCode)) %>%
+  unique() %>%
   group_by(推薦之政黨) %>%
   summarise(當選人數 = length(candVictor[ which(candVictor=="*", candVictor=="!")]),
             參選人數 = n(),
@@ -241,12 +244,13 @@ write_sheet(thirdparty.win.detail,
 
 ##2022年
 
-citycons.partyVote.2022 <- citycons.nameData %>%
+citycons.partyVote.2022 <- citycons.all %>%
+  filter(!is.na(政黨分類)) %>%
   group_by(政黨分類) %>%
   summarise(政黨得票數 = sum(tks))
 
-citycons.VoteDetail.2022 <- citycons.nameData %>%
-  select(15,11,12) %>%
+citycons.VoteDetail.2022 <- citycons.all %>%
+  select(2,13,14) %>%
   unique() %>%
   summarise(總投票人數 = sum(投票數),
             總選舉人數 = sum(選舉人數))
@@ -318,7 +322,7 @@ thirdparty.tks.2022.dept <- citycons.all %>%
   filter(政黨分類 %in% c("時代力量","台灣民眾黨"))
 
 party.countyVoteDetail.2022 <- thirdparty.tks.2022.dept %>%
-  select(15,11,12) %>%
+  select(2,13,14) %>%
   unique() %>%
   group_by(縣市) %>%
   summarise(縣市選區投票人數 = sum(投票數),
@@ -368,7 +372,7 @@ thirdparty.voteRate.2020.dept <- thirdparty.tks.2020.dept %>%
   mutate(催票率 = round(100*得票數/選舉人數,2))
 
 thirdparty.voteRate.2022.dept <-thirdparty.tks.2022.dept %>%
-  select(15,22,21,8,11,12) %>%
+  select(2,18,15,10,13,14) %>%
   mutate(年份 = "2022") %>%
   select(7,1:6) %>%
   rename("鄉鎮市區" = 3,"得票數"=5) %>%

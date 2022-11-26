@@ -206,7 +206,7 @@ president_20 <- elcand %>%
 ## 整理縣市長資料 ###
 
 PartyVotes_citymayors <- read_sheet(ss = "1oWgoobgYUT8josvZuCShhe7kdw-gdowF3RIXRLiCEI8",
-                                      sheet = "RAW-歷屆縣市長選舉資訊") %>%
+                                      sheet = "RAW-歷屆縣市長參選人資訊") %>%
   filter(年份>=2014) %>% 
   select(1,4,6,7,11,12,16,17)
 

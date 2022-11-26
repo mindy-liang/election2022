@@ -17,6 +17,9 @@ download.file("https://download.2022dl.nat.gov.tw/final.json",destfile="final.js
 running <- fromJSON("running.json")
 final <- fromJSON("final_T_17NOV.json")
 
+
+
+
 finalRaw <- final
 
 citycons <- rbind(finalRaw$T1,finalRaw$T2,finalRaw$T3) %>%
