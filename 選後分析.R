@@ -10,7 +10,15 @@ candidate %>%
 write_sheet(candidate.party, ss = "1IDiqoihQXNKf9ekHvHFGZ0doT2gBPBMQi2H0G8e9SBI",
             sheet = "各政黨參選各公職人數")
 
-#### 篩選2020立委選舉資料(全國) ####
+voteRate.citycons %>% 
+  group_by(年份,政黨分類) %>%
+  summarise(總得票數 = sum(得票數)) %>%
+  left_join(vote.detail) %>%
+  group_by(年份,政黨分類) %>%
+  summarise(政黨得票率 = 總得票數/總投票數,
+            政黨催票率 = 總得票數/總選舉人數) -> voteRate.citycons.party.2018
+
+## 篩選2020立委選舉資料(全國) ##
 
 
 #區域立委
@@ -85,7 +93,7 @@ congress.2020.all <- elctks %>%
     政黨名稱== "時代力量" ~ "時代力量",
     政黨名稱== "無" ~ "無黨籍",
     政黨名稱!= c("中國國民黨","民主進步黨",
-              "台灣民眾黨","時代力量","無") ~ "其他政黨"))
+             "台灣民眾黨","時代力量","無") ~ "其他政黨"))
 
 ## 山地原住民
 
@@ -263,14 +271,15 @@ congress.partyVote.2020 %>%
   mutate(總投票人數 = congress.VoteDetail.2020$總投票人數,
          總選舉人數 = congress.VoteDetail.2020$總選舉人數) %>%
   group_by(政黨分類) %>%
-  summarise(政黨得票率 = round(100*政黨得票數/總投票人數,2),
-            政黨催票率 = round(100*政黨得票數/總選舉人數,2)) %>%
+  summarise(政黨得票率 = 政黨得票數/總投票人數,
+            政黨催票率 = 政黨得票數/總選舉人數) %>%
   mutate(年份 = "2020-立委") %>%
   select(4,1:3) -> congress.party.2020
 
 #2020政黨票 政黨得票率/催票率
 
 party.tks.2020 %>%
+  filter(縣市 == "全國")%>%
   group_by(政黨分類) %>%
   summarise(政黨得票數 = sum(得票數)) -> party.vote.2020
 
@@ -285,76 +294,63 @@ party.vote.2020 %>%
   mutate(總投票人數 = party.VoteDetail.2020$總投票人數,
          總選舉人數 = party.VoteDetail.2020$總選舉人數) %>%
   group_by(政黨分類) %>%
-  summarise(政黨得票率 = round(100*政黨得票數/總投票人數,2),
-            政黨催票率 = round(100*政黨得票數/總選舉人數,2)) %>%
+  summarise(政黨得票率 = 政黨得票數/總投票人數,
+            政黨催票率 = 政黨得票數/總選舉人數) %>%
   mutate(年份 = "2020-政黨票") %>%
   select(4,1:3) -> party.2020
 
-##2022年
 
-citycons.partyVote.2022 <- citycons.nameData %>%
-  group_by(政黨分類) %>%
-  summarise(政黨得票數 = sum(tks))
+#### 6. 歷屆各縣市首長與議會最大黨 ####
 
-citycons.VoteDetail.2022 <- citycons.nameData %>%
-  select(15,11,12) %>%
+leadingParty_citycons <- read_sheet(ss = "1oWgoobgYUT8josvZuCShhe7kdw-gdowF3RIXRLiCEI8",
+                                    sheet = "2002-2018各縣市議會最大黨") %>%
+  filter(年份>=2014) %>%
+  select(1,2,5) %>%
   unique() %>%
-  summarise(總投票人數 = sum(投票數),
-            總選舉人數 = sum(選舉人數))
+  rename("議會最大黨" = 3)
 
-citycons.partyVote.2022 %>%
-  mutate(總投票人數 = citycons.VoteDetail.2022$總投票人數,
-         總選舉人數 = citycons.VoteDetail.2022$總選舉人數) %>%
-  group_by(政黨分類) %>%
-  summarise(政黨得票率 = round(100*政黨得票數/總投票人數,2),
-            政黨催票率 = round(100*政黨得票數/總選舉人數,2)) %>%
-  filter(!is.na(政黨分類))%>%
+leadingParty_citymayors <- read_sheet(ss = "1oWgoobgYUT8josvZuCShhe7kdw-gdowF3RIXRLiCEI8",
+                                      sheet = "RAW-歷屆縣市長選舉資訊") %>%
+  filter(年份>=2014) %>%
+  select(1,4,7) %>%
+  unique() %>%
+  rename("縣市長政黨"=3)
+
+leadingParty_diff_byCounty <- left_join(leadingParty_citymayors,leadingParty_citycons) %>%
+  mutate(是否分裂 =  ifelse(縣市長政黨 == 議會最大黨, "N", "Y")) %>%
+  left_join(taiwan.county.mapping, by = c("縣市" ="mapping-縣市")) %>%
+  select(6,8,7,1:5) %>%
+  arrange(年份,編號)
+
+#2022 縣市長&縣市議員分裂情形
+
+citymayor.nameData  %>%
+  filter(candVictor %in% c("*","!")) %>%
+  select(13,1:2,"縣市","推薦之政黨") %>%
   mutate(年份 = "2022") %>%
-  select(4,1:3) -> citycons.party.2022
+  select(5,3,1) %>%
+  rename("縣市" = 2, "縣市長政黨" = 3) ->leadingParty_citymayors_2022
 
-
-#合併結果
-
-party.rate.history <- rbind(voteRate.citycons.party,congress.party.2020,party.2020,citycons.party.2022) %>%
-  arrange(年份)
-
-write_csv(party.rate.history, file.path(analysis.path,"2018-2022年各政黨得票率、催票率.csv"))
-
-write_sheet(party.rate.history,
-            ss = "1JDiHbk4jORtrUoWBHdIELakqQMMVygs-I8xKvTo7v9M",
-            sheet = "2018-2022年各政黨得票率、催票率")
-
-#### 時力選區 ####
-
-newparty.dept.2022 <- read_sheet(ss = "1JDiHbk4jORtrUoWBHdIELakqQMMVygs-I8xKvTo7v9M",
-                                 sheet = "時代力量議員提名選區") %>%
-  select(2,1) %>%
-  mutate(時力選區 = str_sub(時力選區, 4,9)) 
-
-# 2020政黨票
-
-#需重新整理選區資料
-newparty.dept.2022 %>%
-  mutate(選區 = sprintf("%02d",parse_number(時力選區))) %>%
-  left_join(select(election_area_mapping,c(6,7,3)), by = c("縣市" = "COUNTYNAME", "選區" = "areaCode")) %>%
-  unique()-> parse.newparty
-
-
-party.countyVoteDetail.2020 <- party.tks.2020 %>%
-  filter(縣市 != "全國") %>%
-  select(3,10,11) %>%
-  unique() %>%
-  group_by(縣市) %>%
-  summarise(總投票人數 = sum(投票數),
-            總選舉人數 = sum(選舉人數))
-
-thirdparty.tks.2020.dept <- party.tks.2020 %>%
-  inner_join(select(parse.newparty, c(1,3,4)), by = c("縣市","選區","鄉鎮市區"="TOWNNAME")) %>%
-  filter(政黨分類 %in% c("時代力量","台灣民眾黨"))
-
-thirdparty.tks.2020.county <- thirdparty.tks.2020.dept %>%
+citycons.all %>%
+  filter(candVictor %in% c("*","!")) %>%
+  select(2,15,11) %>%
   group_by(縣市,政黨分類) %>%
-  summarise(縣市得票數 = sum(得票數)) %>%
-  left_join(party.countyVoteDetail.2020, by = "縣市") %>%
-  summarise(縣市得票率 = round(100*縣市得票數/總投票人數,2),
-            縣市催票率 = round(100*縣市得票數/總選舉人數,2))
+  summarise(席次 = n()) %>%
+  filter(!政黨分類 %in% c("無黨籍","其他政黨")) %>%
+  arrange(縣市,desc(席次)) %>%
+  slice_head(n = 1) %>%
+  mutate(年份 = "2022")%>%
+  select(4,1,2) %>%
+  rename("議會最大黨" = 3) ->leadingParty_citycons_2022
+
+leadingParty_diff_byCounty_2022 <- left_join(leadingParty_citymayors_2022,leadingParty_citycons_2022) %>%
+  mutate(是否分裂 =  ifelse(縣市長政黨 == 議會最大黨, "N", "Y"))
+
+write_csv(leadingParty_diff_byCounty,file.path(analysis.path,"各縣市首長與議會最大黨分裂情形.csv"))
+
+write_sheet(leadingParty_diff_byCounty,
+            ss = "1JDiHbk4jORtrUoWBHdIELakqQMMVygs-I8xKvTo7v9M",
+            sheet = "6.各縣市首長與議會最大黨分裂情形")
+
+
+

@@ -1,27 +1,3 @@
-#### 歷屆各縣市首長與議會最大黨 ####
-
-leadingParty_citycons <- read_sheet(ss = "1oWgoobgYUT8josvZuCShhe7kdw-gdowF3RIXRLiCEI8",
-           sheet = "2002-2018各縣市議會最大黨") %>%
-  filter(年份>=2014) %>%
-  select(1:3) %>%
-  unique() %>%
-  rename("議會最大黨" = 3)
-
-leadingParty_citymayors <- read_sheet(ss = "1oWgoobgYUT8josvZuCShhe7kdw-gdowF3RIXRLiCEI8",
-                                      sheet = "RAW-歷屆縣市長選舉資訊") %>%
-  filter(年份>=2014) %>%
-  select(1,4,7) %>%
-  unique() %>%
-  rename("縣市長政黨"=3)
-
-leadingParty_diff_byCounty <- left_join(leadingParty_citymayors,leadingParty_citycons) %>%
-  mutate(是否分裂 =  ifelse(縣市長政黨 == 議會最大黨, "N", "Y"))
-
-write_csv(leadingParty_diff_byCounty,file.path(analysis.path,"各縣市首長與議會最大黨分裂情形.csv"))
-
-write_sheet(leadingParty_diff_byCounty,
-            ss = "1JDiHbk4jORtrUoWBHdIELakqQMMVygs-I8xKvTo7v9M",
-            sheet = "各縣市首長與議會最大黨分裂情形")
 
 #### 2012起歷屆選舉藍綠催票率 ####
 
@@ -226,12 +202,6 @@ president_20 <- elcand %>%
   filter(row_number() %% 2 == 1) %>%
   select(14:16,1,2,13,17,4,6,7,9,10,12)
 
-goVoteRate_president <- rbind(president_12,president_16,president_20) %>%
-  filter(政黨名稱 %in% c("民主進步黨","中國國民黨"))%>%
-  group_by(年份,政黨名稱)%>%
-  summarise(政黨得票率 = 得票率, 政黨催票率 = 催票率) %>%
-  mutate(選舉分類 = "總統") %>%
-  select(1,5,2,3,4)
 
 ## 整理縣市長資料 ###
 
@@ -240,28 +210,6 @@ PartyVotes_citymayors <- read_sheet(ss = "1oWgoobgYUT8josvZuCShhe7kdw-gdowF3RIXR
   filter(年份>=2014) %>% 
   select(1,4,6,7,11,12,16,17)
 
-goVoteRate_citymayors <- PartyVotes_citymayors%>%
-  filter(政黨名稱 %in% c("民主進步黨","中國國民黨")) %>%
-  group_by(年份,政黨名稱) %>%
-  mutate(政黨得票數 = sum(得票數),政黨投票數 = sum(投票數)) %>%
-  group_by(年份) %>%
-  mutate(當年選舉人數 = sum(選舉人數)) %>%
-  select(1,4,9:11) %>%
-  unique() %>%
-  group_by(年份,政黨名稱) %>%
-  summarise(政黨得票率 = sprintf("%5.2f",(as.numeric(政黨得票數)/as.numeric(政黨投票數)*100)),
-            政黨催票率 = sprintf("%5.2f",(as.numeric(政黨得票數)/as.numeric(當年選舉人數)*100))) %>%
-  mutate(選舉分類 = "縣市長") %>%
-  select(1,5,2,3,4)
-
-goVoteRate_byParty <- rbind(goVoteRate_president,goVoteRate_citymayors) %>%
-  arrange(年份,政黨名稱)
-
-write_csv(goVoteRate_byParty,file.path(analysis.path,"2012至今藍綠選舉投票率與催票率變化.csv"))
-
-write_sheet(goVoteRate_byParty,
-            ss = "1JDiHbk4jORtrUoWBHdIELakqQMMVygs-I8xKvTo7v9M",
-            sheet = "2012至今藍綠選舉投票率與催票率變化")
 
 #### 比較過去兩屆議員總席次變化 ####
 

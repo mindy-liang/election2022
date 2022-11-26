@@ -5,52 +5,52 @@ pacman::p_load(tidyverse,xml2, stringr, googledrive, googlesheets4,httr,readxl,j
 gs4_auth(email = "mindy.liang@thenewslens.com")
 
 Vote.path <-"~/Library/Mobile Documents/com~apple~CloudDocs/Documents/九合一選舉-中選會/election2022/voteData"
+analysis.path <- "~/Library/Mobile Documents/com~apple~CloudDocs/Documents/九合一選舉-中選會/election2022/選後分析圖表用data"
 
 #### import ####
 
 # import
-download.file("https://download.2022dl.nat.gov.tw/running.json",destfile="running_T_17NOV.json", method = "wget", extra="--no-check-certificate	--http-user=DL000005 --http-password=7JM3MAI")
+download.file("https://download.2022dl.nat.gov.tw/running.json",destfile="running.json", method = "wget", extra="--no-check-certificate	--http-user=DL000005 --http-password=7JM3MAI")
 
-download.file("https://download.2022dl.nat.gov.tw/final.json",destfile="final_T_17NOV.json", method = "wget", extra="--no-check-certificate	--http-user=DL000005 --http-password=7JM3MAI")
+download.file("https://download.2022dl.nat.gov.tw/final.json",destfile="final.json", method = "wget", extra="--no-check-certificate	--http-user=DL000005 --http-password=7JM3MAI")
 
-running_T <- fromJSON("running_T_17NOV.json")
+running <- fromJSON("running.json")
 final <- fromJSON("final_T_17NOV.json")
 
 finalRaw <- final
 
 citycons <- rbind(finalRaw$T1,finalRaw$T2,finalRaw$T3) %>%
   unnest(cols = c(candTksInfo)) %>%
-  select(1:10,13,17:18) %>%
-  rename("投票數" = 11,"選舉人數" = 12, "投票率" = 13)%>%
+  select(1:10,13,17) %>%
+  rename("投票數" = 11,"選舉人數" = 12)%>%
   mutate(candNo = as.character(candNo))
 
 write_csv(citycons, file.path(Vote.path, "citycons.csv"))
 
 citymayor <- (finalRaw$TC) %>%
   unnest(cols = c(candTksInfo)) %>%
-  select(1:10,13,17:18)%>%
-  rename("投票數" = 11,"選舉人數" = 12, "投票率" = 13) %>%
+  select(1:10,13,17)%>%
+  rename("投票數" = 11,"選舉人數" = 12) %>%
   mutate(candNo = as.character(candNo))
 
 write_csv(citymayor, file.path(Vote.path, "citymayor.csv"))
 
 village <- (finalRaw$TV) %>%
   unnest(cols = c(candTksInfo)) %>%
-  select(1:10,13,17:18)%>%
-  rename("投票數" = 11,"選舉人數" = 12, "投票率" = 13)%>%
+  select(1:10,13,17)%>%
+  rename("投票數" = 11,"選舉人數" = 12)%>%
   mutate(candNo = as.character(candNo))
 
 write_csv(village, file.path(Vote.path, "village.csv"))
 
 #### data cleaning ####
 
-analysis.path <- "~/Library/Mobile Documents/com~apple~CloudDocs/Documents/九合一選舉-中選會/election2022/選後分析圖表用data"
-
 citymayor.nameData <- citymayor %>%
   filter(is.na(deptCode)) %>%
-  left_join(citymayor.list,
+  left_join(select(citymayor.list,-c("deptCode")),
             by = c("prvCode", "cityCode",
                    "candNo" = "抽籤號次")) %>%
+  select(13,14,7,15:18,8:12) %>%
   mutate(政黨分類 = case_when(
     推薦之政黨== "中國國民黨" ~ "中國國民黨",
     推薦之政黨== "民主進步黨" ~ "民主進步黨",
@@ -59,7 +59,22 @@ citymayor.nameData <- citymayor %>%
     推薦之政黨== "無" ~ "無黨籍",
     推薦之政黨!= c("中國國民黨","民主進步黨",
               "台灣民眾黨","時代力量","無") ~ "其他政黨"))
+  
 
+citycons.all <- citycons %>%
+  filter(is.na(tboxNo)) %>%
+  left_join(select(citycons.list, -"deptCode"),
+            by = c("prvCode", "cityCode","areaCode",
+                   "candNo" = "抽籤號次")) %>%
+  select(13,14,3,4,7,16:19,8:12) %>%
+  mutate(政黨分類 = case_when(
+    推薦之政黨== "中國國民黨" ~ "中國國民黨",
+    推薦之政黨== "民主進步黨" ~ "民主進步黨",
+    推薦之政黨== "台灣民眾黨" ~ "台灣民眾黨",
+    推薦之政黨== "時代力量" ~ "時代力量",
+    推薦之政黨== "無" ~ "無黨籍",
+    推薦之政黨!= c("中國國民黨","民主進步黨",
+              "台灣民眾黨","時代力量","無") ~ "其他政黨"))
 
 citycons.nameData <- citycons %>%
   filter(is.na(deptCode)) %>%
@@ -75,13 +90,7 @@ citycons.nameData <- citycons %>%
     推薦之政黨!= c("中國國民黨","民主進步黨",
               "台灣民眾黨","時代力量","無") ~ "其他政黨"))
 
-#各政黨得票率
 
-citymayor.nameData  %>%
-  group_by(選舉區,政黨分類) %>%
-  summarise(得票率 = sprintf("%5.2f",sum(tksRate))) -> citymayor.voteRate.party 
-
-write_csv(citymayor.voteRate.party,file.path(analysis.path,"各縣市各政黨得票率.csv"))
 
 
 # 各縣市長藍綠催票率
@@ -118,27 +127,35 @@ citycons.nameData %>%
 leadingParty_diff_byCounty_2022 <- left_join(leadingParty_citymayors_2022,leadingParty_citycons_2022) %>%
   mutate(是否分裂 =  ifelse(縣市長政黨 == 議會最大黨, "N", "Y"))
 
-#### 本屆各縣市議會組成比例 ####
+#### 各公職應選人數 ####
 
-citycons.nameData %>%
-  filter(!is.na(政黨分類)) %>%
-  group_by(縣市,政黨分類) %>%
-  summarise(當選人數 = length(candVictor[ which(candVictor=="*", candVictor=="!")]),
-            參選人數 = n(),
-            當選比例 = round(當選人數/參選人數*100,2)) %>%
-  mutate(席次佔比 = round(當選人數/sum(當選人數)*100,2), 年份 = "2022") %>%
-  select(7,1,2,6) %>%
-  spread(政黨分類,席次佔比) -> win.citycons.party.counties
+#議員
 
-write_csv(win.citycons.party.counties,file.path(analysis.path,"2022年各縣市議會組成比例.csv"))
+citycons %>%
+  filter(is.na(tboxNo)) %>%
+  left_join(select(citycons.list, -"deptCode"),
+            by = c("prvCode", "cityCode","areaCode",
+                   "candNo" = "抽籤號次")) %>%
+  filter(is.na(deptCode)) %>%
+  group_by(縣市,選區) %>%
+  summarise(應選人數 = length(candVictor[ which(candVictor=="*", candVictor=="!")]),
+            參選人數 = n()) %>%
+  mutate(選區 = sprintf("%02d",parse_number(選區)))-> select.num.citycons
 
-write_sheet(win.citycons.party.counties,
-            ss = "1JDiHbk4jORtrUoWBHdIELakqQMMVygs-I8xKvTo7v9M",
-            sheet = "022年各縣市議會組成比例")
+citymayor %>%
+  filter(is.na(deptCode)) %>%
+  left_join(select(citymayor.list,-c("deptCode")),
+            by = c("prvCode", "cityCode",
+                   "candNo" = "抽籤號次")) %>%
+  filter(is.na(deptCode)) %>%
+  group_by(縣市) %>%
+  summarise(應選人數 = length(candVictor[ which(candVictor=="*", candVictor=="!")]),
+            參選人數 = n()) -> select.num.citymayors
+
 
 
   
-  
+
 
 
 
