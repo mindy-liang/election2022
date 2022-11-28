@@ -103,6 +103,7 @@ village.list <- candidate.list[[1]] %>%
 citymayor.list <- rbind(candidate.list[[5]],candidate.list[[7]]) %>%
   mutate(參選年齡 = 111- as.numeric(substr(出生年月日, 1, 3))) %>%
   select(1:3,8,5:7)
+
 citycons.list <- rbind(candidate.list[[4]],candidate.list[[6]]) %>%
   mutate(參選年齡 = 111- as.numeric(substr(出生年月日, 1, 3))) %>%
   select(1:3,8,5:7)

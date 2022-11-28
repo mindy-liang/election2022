@@ -16,7 +16,7 @@ citycons.all %>%
   select(7,1,2,6) %>%
   spread(政黨分類,席次佔比) %>%
   left_join(taiwan.county.mapping, by = c("縣市" ="mapping-縣市")) %>%
-  select(9,11,10,1,2,3,5,6,8,4,7) %>%
+  select(9,11,10,8,6,5,7,4,3) %>%
   arrange(編號)-> win.citycons.party.counties
 
 write_csv(win.citycons.party.counties,file.path(analysis.path,"2022年各縣市議會組成比例.csv"))
@@ -62,9 +62,9 @@ win.citycons.2018 <- citycons.2018 %>%
   mutate(席次佔比 = round(當選人數/sum(當選人數)*100,2), 年份 = "2018")
 
 win.citycons.2022 <- citycons.all %>%
-  filter(!is.na(deptCode)& !is.na(政黨分類))%>%
+  filter(is.na(deptCode)& !is.na(政黨分類))%>%
   group_by(政黨分類) %>%
-  summarise(當選人數 = length(candVictor[ which(candVictor=="*", candVictor=="!")]),
+  summarise(當選人數 = sum(candVictor=="*",candVictor=="!"),
             參選人數 = n(),
             當選比例 = round(當選人數/參選人數*100,2)) %>%
   mutate(席次佔比 = round(當選人數/sum(當選人數)*100,2), 年份 = "2022")
@@ -72,7 +72,7 @@ win.citycons.2022 <- citycons.all %>%
 win.citycons <- rbind(win.citycons.2014,win.citycons.2018,win.citycons.2022) %>%
   select(1,6,5) %>%
   spread(政黨分類,席次佔比) %>%
-  select(1,2,4,5,7,3,6)
+  select(1,7,5,4,6,3,2)
 
 write_sheet(win.citycons,
             ss = "1JDiHbk4jORtrUoWBHdIELakqQMMVygs-I8xKvTo7v9M",
@@ -269,7 +269,7 @@ citycons.partyVote.2022 %>%
 #合併結果
 
 party.rate.history <- rbind(voteRate.citycons.party.2018,congress.party.2020,party.2020,citycons.party.2022) %>%
-  arrange(年份)
+  arrange(年份,政黨分類)
 
 write_csv(party.rate.history, file.path(analysis.path,"2018-2022年各政黨得票率、催票率.csv"))
 
@@ -343,7 +343,7 @@ thirdparty.voteRate.history <- rbind(thirdparty.tks.2020.county,thirdparty.tks.2
   select(5,1,2,4) %>%
   spread(政黨分類, 縣市催票率) %>%
   left_join(taiwan.county.mapping, by = c("縣市" ="mapping-縣市")) %>%
-  select(1,5,7,6,2:4) %>%
+  select(1,5,7,6,2,4,3) %>%
   arrange(年份,編號)
 
 thirdparty.voteRate.history_2020 <- filter(thirdparty.voteRate.history, 年份 =="2020-政黨票") 

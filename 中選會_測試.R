@@ -15,11 +15,9 @@ download.file("https://download.2022dl.nat.gov.tw/running.json",destfile="runnin
 download.file("https://download.2022dl.nat.gov.tw/final.json",destfile="final.json", method = "wget", extra="--no-check-certificate	--http-user=DL000005 --http-password=7JM3MAI")
 
 running <- fromJSON("running.json")
-final <- fromJSON("final_T_17NOV.json")
+final <- fromJSON("final.json")
 
-
-
-
+runningRaw <- running
 finalRaw <- final
 
 citycons <- rbind(finalRaw$T1,finalRaw$T2,finalRaw$T3) %>%
